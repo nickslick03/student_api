@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import puppeteer from 'puppeteer';
+import { AppGateway } from './app.gateway';
 
 export interface student {
   imageUrl: string;
@@ -23,14 +24,16 @@ const sleep = async (seconds: number) =>
 export class AppService {
   static sccUrl = 'https://apex.messiah.edu/apex/f?p=294';
 
+  constructor(private readonly AppGateway: AppGateway) {}
+
   async getStudents({
     username,
     password,
-    //socketID,
+    socketID,
   }: {
     username: string;
     password: string;
-    //socketID: string;
+    socketID: string;
   }): Promise<student[] | error> {
     const browser = await puppeteer.launch({
       headless: true,
@@ -99,11 +102,11 @@ export class AppService {
           };
         });
 
-        // this.AppGateway.emitEvent(
-        //   socketID,
-        //   'updateProgress',
-        //   `Gathering info on ${student.fullName}`,
-        // );
+        this.AppGateway.emitEvent(
+          socketID,
+          'updateProgress',
+          `Gathering info on ${student.fullName}`,
+        );
 
         students.push(student);
         await studentPage.close();
@@ -111,7 +114,7 @@ export class AppService {
       await browser.close();
       return students;
     } catch (e) {
-      console.log(e);
+      console.error(e);
       await browser.close();
       return {
         code: 500,
